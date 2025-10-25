@@ -1,0 +1,1790 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+  <meta name="description" content="A romantic, accessible website for Priya with a love message board and background music, optimized for mobile and desktop." />
+  <title>Priya's Love World 💗 - Login</title>
+  <style>
+    /* CSS Variables */
+    :root {
+      --bg-light: linear-gradient(135deg, #ffe4f0, #ffd7e8);
+      --bg-dark: linear-gradient(135deg, #2c1b2a, #4a2c42);
+      --text-light: #2c1b2a;
+      --text-dark: #ffd1e0;
+      --accent: #ff5c8d;
+      --accent-hover: #d32361;
+      --button-bg: #db3f7a;
+      --button-bg-dark: #ff5c8d;
+      --button-hover: #f13e72;
+      --shadow: 0 4px 10px rgba(219, 63, 122, 0.7);
+      --shadow-hover: 0 6px 12px rgba(211, 35, 97, 0.8);
+      --transition: 0.3s ease;
+    }
+
+    /* Reset & base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-light);
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+      min-height: 100vh;
+      line-height: 1.6;
+      touch-action: manipulation;
+      transition: background var(--transition), color var(--transition);
+      font-size: 16px;
+    }
+    body.dark-theme {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* Skip to content */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 1rem;
+      background: var(--accent);
+      color: white;
+      padding: 0.5rem 1rem;
+      z-index: 1000;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .skip-link:focus {
+      top: 1rem;
+      outline: 2px solid #fff;
+    }
+
+    /* Custom Cursor (Desktop only) */
+    .cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="%23ff5c8d" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') no-repeat center;
+      pointer-events: none;
+      z-index: 1000;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.6; }
+    }
+    @media (max-width: 768px) {
+      .cursor { display: none; }
+    }
+
+    /* Preloader */
+    .preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff0f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      transition: opacity 0.5s ease;
+    }
+    .preloader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .preloader::before {
+      content: '💗';
+      font-size: 2.5rem;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Floating elements */
+    .floating-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+    }
+    .floating {
+      position: absolute;
+      user-select: none;
+      animation: floatUp 6s linear forwards;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0.8; }
+      50% { opacity: 1; transform: translateY(50vh) rotate(180deg) scale(1.1); }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+    .floating.heart {
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    .floating.heart.large {
+      font-size: 1.5rem;
+    }
+    .floating.flower {
+      font-size: 1.2rem;
+      color: #f28acb;
+    }
+    .floating.flower.large {
+      font-size: 1.8rem;
+    }
+    @media (max-width: 768px) {
+      .floating { font-size: 0.7rem; }
+      .floating.large { font-size: 1rem; }
+    }
+
+    /* Ripple effect for buttons */
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1) translate(-50%, -50%);
+      transform-origin: center;
+    }
+    .ripple:active::after {
+      animation: ripple 0.4s ease-out;
+    }
+    @keyframes ripple {
+      0% { transform: scale(1) translate(-50%, -50%); opacity: 1; }
+      100% { transform: scale(20) translate(-50%, -50%); opacity: 0; }
+    }
+
+    /* Common button styles */
+    button, a[role="button"] {
+      cursor: pointer;
+      touch-action: manipulation;
+      min-width: 48px;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    /* LOGIN STYLES */
+    #login-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 228, 240, 0.9);
+      backdrop-filter: blur(8px);
+    }
+    body.dark-theme #login-page {
+      background: rgba(44, 27, 42, 0.9);
+    }
+    form#login-form {
+      background: #fff0f6cc;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      border: 2px solid #f8c2dd;
+      transition: border-color var(--transition), transform var(--transition), background var(--transition);
+    }
+    body.dark-theme form#login-form {
+      background: #3a2334cc;
+      border-color: var(--accent);
+    }
+    form#login-form:hover, form#login-form:focus-within {
+      border-color: #c249a4;
+      transform: scale(1.02);
+    }
+    form#login-form h1 {
+      margin-bottom: 1.2rem;
+      font-size: 1.8rem;
+      color: #c249a4;
+      text-shadow: 1px 1px 3px #f6caf9;
+      user-select: none;
+    }
+    body.dark-theme form#login-form h1 {
+      color: #ff81a7;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      color: #76304c;
+      font-size: 0.9rem;
+    }
+    body.dark-theme label {
+      color: var(--text-dark);
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      margin-bottom: 1.2rem;
+      border: 2px solid #f8c2dd;
+      border-radius: 25px;
+      font-size: 1rem;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+      background: #fff0f6;
+      color: var(--text-light);
+    }
+    body.dark-theme input[type="text"],
+    body.dark-theme input[type="password"] {
+      background: #4a2c42;
+      border-color: var(--accent);
+      color: var(--text-dark);
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #c249a4;
+      outline: none;
+      box-shadow: 0 0 10px #c249a4aa;
+      background: white;
+    }
+    body.dark-theme input[type="text"]:focus,
+    body.dark-theme input[type="password"]:focus {
+      background: #3a2334;
+    }
+    button.login-btn {
+      width: 100%;
+      background: linear-gradient(45deg, #ff81a7, #e04170);
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 0.8rem;
+      font-size: 1rem;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), transform 0.2s, box-shadow var(--transition);
+    }
+    button.login-btn:hover,
+    button.login-btn:focus {
+      background: linear-gradient(45deg, #f94a84, #b43456);
+      transform: scale(1.05) rotate(-3deg);
+      box-shadow: var(--shadow-hover);
+      outline: 2px solid #fff;
+    }
+    button.login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .note {
+      margin-top: 0.8rem;
+      font-size: 0.85rem;
+      color: #a8527b;
+      min-height: 1.2em;
+      font-weight: 600;
+      text-align: center;
+    }
+    body.dark-theme .note {
+      color: #ff81a7;
+    }
+
+    /* HOME PAGE STYLES */
+    #home-page {
+      position: relative;
+      z-index: 10;
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      animation: fadeInEase 0.7s ease forwards;
+    }
+    @keyframes fadeInEase {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 1.5rem 2rem;
+      background: url('https://via.placeholder.com/800x300?text=Romantic+Background') center/cover;
+      background-attachment: fixed;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 228, 240, 0.3);
+      z-index: 1;
+    }
+    header > * {
+      position: relative;
+      z-index: 2;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+      color: #cb3a7e;
+      text-shadow: 1px 1px 4px #f8afd9;
+      font-family: 'Georgia', serif;
+    }
+    body.dark-theme header h1 {
+      color: #ff81a7;
+    }
+    header p {
+      font-size: 1.1rem;
+      font-weight: 600;
+      max-width: 500px;
+      margin: 0 auto;
+      color: #6a3150;
+      font-style: italic;
+    }
+    body.dark-theme header p {
+      color: var(--text-dark);
+    }
+
+    /* Navigation */
+    nav {
+      margin: 1.5rem 0 2rem;
+      background: rgba(255, 228, 240, 0.9);
+      padding: 0.8rem;
+      backdrop-filter: blur(5px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    body.dark-theme nav {
+      background: rgba(44, 27, 42, 0.9);
+    }
+    .nav-toggle {
+      display: none;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      margin: 0.5rem;
+    }
+    .nav-menu {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+    }
+    nav a {
+      text-decoration: none;
+      background: var(--accent);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      font-weight: 700;
+      border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), box-shadow var(--transition), transform 0.2s;
+      font-size: 0.95rem;
+    }
+    nav a:hover,
+    nav a:focus {
+      background: var(--accent-hover);
+      box-shadow: var(--shadow-hover);
+      transform: scale(1.08) rotate(-3deg);
+      outline: 2px solid #fff;
+    }
+    @media (max-width: 768px) {
+      .nav-toggle {
+        display: block;
+      }
+      .nav-menu {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        transform: translateX(-100%);
+      }
+      .nav-menu.active {
+        display: flex;
+        transform: translateX(0);
+      }
+      nav a {
+        width: 100%;
+        text-align: center;
+        padding: 0.6rem;
+        margin: 0.3rem 0;
+      }
+    }
+
+    /* Section base */
+    section {
+      max-width: 800px;
+      margin: 0 auto 3rem;
+      padding: 0 1.2rem;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    section h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #d63f7c;
+      margin-bottom: 1rem;
+      text-align: center;
+      text-shadow: 1px 1px 3px #f7bbd7;
+      font-family: 'Georgia', serif;
+    }
+    body.dark-theme section h2 {
+      color: #ff81a7;
+    }
+
+    /* Quote Generator */
+    .quote-generator {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .quote-generator button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), transform 0.2s;
+    }
+    .quote-generator button:hover,
+    .quote-generator button:focus {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+      outline: 2px solid #fff;
+    }
+    #quote-text {
+      font-size: 1rem;
+      font-style: italic;
+      color: #9c4570;
+      margin-top: 0.8rem;
+      min-height: 1.5em;
+    }
+    body.dark-theme #quote-text {
+      color: var(--text-dark);
+    }
+    .heart-pop {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5rem;
+      color: var(--accent);
+      opacity: 0;
+      animation: pop 0.5s ease forwards;
+    }
+    @keyframes pop {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+      100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-20px); }
+    }
+
+    /* Gallery */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+      justify-items: center;
+    }
+    .gallery figure {
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    .gallery img {
+      width: 100%;
+      max-width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      transition: transform var(--transition), box-shadow var(--transition);
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+    .gallery figure::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(255, 92, 141, 0.2), transparent);
+      z-index: 2;
+      transition: opacity var(--transition);
+    }
+    .gallery img:hover, .gallery img:focus {
+      transform: scale(1.08) rotate(3deg);
+      box-shadow: var(--shadow-hover);
+      outline: 2px solid #fff;
+    }
+    .gallery figcaption {
+      font-size: 0.75rem;
+      color: #6a3150;
+      text-align: center;
+      margin-top: 0.4rem;
+    }
+    body.dark-theme .gallery figcaption {
+      color: var(--text-dark);
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      touch-action: none;
+    }
+    .lightbox-content {
+      position: relative;
+      max-width: 95%;
+      max-height: 90%;
+    }
+    .lightbox img {
+      max-width: 100%;
+      max-height: 75vh;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      user-select: none;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      color: #fff;
+      font-size: 1.8rem;
+      cursor: pointer;
+      text-shadow: 0 0 4px var(--accent);
+      min-width: 48px;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 92, 141, 0.7);
+      color: white;
+      border: none;
+      font-size: 1.2rem;
+      padding: 0.5rem 0.8rem;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background var(--transition);
+      min-width: 48px;
+      min-height: 48px;
+    }
+    .lightbox-nav:hover, .lightbox-nav:focus {
+      background: var(--accent-hover);
+      outline: 2px solid #fff;
+    }
+    .lightbox-prev {
+      left: -30px;
+    }
+    .lightbox-next {
+      right: -30px;
+    }
+    @media (max-width: 768px) {
+      .lightbox img { max-height: 65vh; }
+      .lightbox-nav { font-size: 1rem; padding: 0.4rem 0.7rem; }
+      .lightbox-prev { left: -25px; }
+      .lightbox-next { right: -25px; }
+    }
+
+    /* Love Notes */
+    .notes {
+      background: #fff0f6cc;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      font-size: 1rem;
+      line-height: 1.5;
+      font-family: 'Georgia', serif;
+      color: #6d3451;
+    }
+    body.dark-theme .notes {
+      background: #3a2334cc;
+      color: var(--text-dark);
+    }
+    .notes blockquote {
+      font-style: italic;
+      color: #9c4570;
+      border-left: 4px solid #d63f7c;
+      padding-left: 1rem;
+      margin: 1rem 0;
+      font-weight: 600;
+    }
+    body.dark-theme .notes blockquote {
+      color: #ff81a7;
+      border-left-color: var(--accent);
+    }
+    .notes .love-letter {
+      background: #fde9f8;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: inset 0 0 15px #fbbbda;
+      font-weight: 600;
+      line-height: 1.6;
+      color: #803256;
+      margin-top: 1.5rem;
+      white-space: pre-wrap;
+      letter-spacing: 0.02em;
+      position: relative;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      opacity: 0;
+      animation: heartReveal 1s ease forwards 0.5s;
+    }
+    body.dark-theme .notes .love-letter {
+      background: #4a2c42;
+      color: var(--text-dark);
+    }
+    @keyframes heartReveal {
+      0% { opacity: 0; transform: scale(0.6); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Message Board */
+    .message-board {
+      background: #fff0f6cc;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-top: 1.5rem;
+    }
+    body.dark-theme .message-board {
+      background: #3a2334cc;
+    }
+    .message-board form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .message-board textarea {
+      width: 100%;
+      padding: 0.7rem;
+      border: 2px solid #f8c2dd;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      resize: vertical;
+      max-height: 150px;
+      background: #fff0f6;
+      color: var(--text-light);
+    }
+    body.dark-theme .message-board textarea {
+      background: #4a2c42;
+      border-color: var(--accent);
+      color: var(--text-dark);
+    }
+    .message-board textarea:focus {
+      border-color: #c249a4;
+      outline: none;
+      box-shadow: 0 0 10px #c249a4aa;
+    }
+    .message-board button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), transform 0.2s;
+      align-self: flex-start;
+    }
+    .message-board button:hover,
+    .message-board button:focus {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+      outline: 2px solid #fff;
+    }
+    .message-board button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .message-list {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .message-item {
+      background: #fde9f8;
+      padding: 0.8rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #6d3451;
+      position: relative;
+      animation: slideIn 0.3s ease;
+    }
+    body.dark-theme .message-item {
+      background: #4a2c42;
+      color: var(--text-dark);
+    }
+    .message-item time {
+      font-size: 0.75rem;
+      color: #9c4570;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    body.dark-theme .message-item time {
+      color: #ff81a7;
+    }
+    .message-item button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: none;
+      border: none;
+      color: #d63f7c;
+      font-size: 0.9rem;
+      padding: 0.2rem;
+      cursor: pointer;
+    }
+    body.dark-theme .message-item button {
+      color: var(--accent);
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+      border-left: 3px solid #f175ab;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    body.dark-theme .timeline {
+      border-left-color: var(--accent);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+      transition: transform 0.3s;
+    }
+    .timeline-item:hover {
+      transform: translateX(4px);
+    }
+    .timeline-item::before {
+      content: '🌸';
+      position: absolute;
+      left: -24px;
+      top: 2px;
+      width: 20px;
+      height: 20px;
+      font-size: 1.2rem;
+      text-align: center;
+      animation: rotate 5s linear infinite;
+    }
+    @keyframes rotate {
+      100% { transform: rotate(360deg); }
+    }
+    .timeline-item h3 {
+      font-size: 1.2rem;
+      color: #d63f7c;
+      margin-bottom: 0.3rem;
+      font-weight: 900;
+    }
+    body.dark-theme .timeline-item h3 {
+      color: #ff81a7;
+    }
+    .timeline-item time {
+      font-size: 0.9rem;
+      font-style: italic;
+      color: #aa4b6a;
+      letter-spacing: 0.02em;
+    }
+    body.dark-theme .timeline-item time {
+      color: var(--text-dark);
+    }
+    .timeline-item p {
+      margin: 0.3rem 0 0;
+      color: #692d49;
+      font-size: 0.95rem;
+    }
+    body.dark-theme .timeline-item p {
+      color: var(--text-dark);
+    }
+
+    /* Social Sharing */
+    .social-share {
+      text-align: center;
+      margin: 1.5rem 0;
+    }
+    .social-share a {
+      display: inline-flex;
+      background: var(--accent);
+      color: white;
+      padding: 0.5rem 1rem;
+      margin: 0.3rem;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: background var(--transition), transform 0.2s;
+      min-height: 48px;
+    }
+    .social-share a:hover,
+    .social-share a:focus {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+      outline: 2px solid #fff;
+    }
+
+    /* Scroll to Top */
+    #scroll-top {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 1rem;
+      padding: 0.5rem;
+      border-radius: 50%;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), transform 0.2s;
+      z-index: 20;
+      min-width: 48px;
+      min-height: 48px;
+      display: none;
+    }
+    body.dark-theme #scroll-top {
+      background: var(--button-bg-dark);
+    }
+    #scroll-top:hover, #scroll-top:focus {
+      background: var(--button-hover);
+      transform: scale(1.1);
+      outline: 2px solid #fff;
+    }
+    #scroll-top.visible {
+      display: block;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #9a5677cc;
+      padding: 2rem 1rem 3rem;
+    }
+    body.dark-theme footer {
+      color: #ff81a7cc;
+    }
+
+    /* Fixed Buttons */
+    #logout-btn, #music-toggle, #theme-toggle {
+      position: fixed;
+      background: var(--button-bg);
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 0.5rem;
+      border-radius: 50%;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), transform 0.2s;
+      z-index: 20;
+      font-size: 0.9rem;
+      min-width: 48px;
+      min-height: 48px;
+    }
+    body.dark-theme #logout-btn,
+    body.dark-theme #music-toggle,
+    body.dark-theme #theme-toggle {
+      background: var(--button-bg-dark);
+    }
+    #logout-btn:hover, #logout-btn:focus,
+    #music-toggle:hover, #music-toggle:focus,
+    #theme-toggle:hover, #theme-toggle:focus {
+      background: var(--button-hover);
+      transform: scale(1.1);
+      outline: none;
+    }
+    #music-toggle {
+      top: 1rem;
+      left: 1rem;
+    }
+    #theme-toggle {
+      top: 3.5rem;
+      left: 1rem;
+    }
+    #logout-btn {
+      top: 1rem;
+      right: 1rem;
+    }
+    @media (max-width: 768px) {
+      #music-toggle {
+        top: 0.8rem;
+        left: 0.8rem;
+      }
+      #theme-toggle {
+        top: 2.8rem;
+        left: 0.8rem;
+      }
+      #logout-btn {
+        top: 0.8rem;
+        right: 0.8rem;
+      }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      body { font-size: 14px; }
+      header { padding: 2rem 1rem; }
+      header h1 { font-size: 1.6rem; }
+      header p { font-size: 0.95rem; }
+      section h2 { font-size: 1.5rem; }
+      form#login-form { padding: 1.5rem; }
+      form#login-form h1 { font-size: 1.5rem; }
+      input[type="text"], input[type="password"] { font-size: 0.9rem; }
+      button.login-btn { font-size: 0.9rem; }
+      .gallery { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+      .gallery img { max-width: 100px; height: 70px; }
+      .gallery figcaption { font-size: 0.7rem; }
+      .quote-generator button { font-size: 0.9rem; padding: 0.6rem 1.2rem; }
+      #quote-text { font-size: 0.9rem; }
+      .notes { font-size: 0.9rem; }
+      .notes blockquote { padding-left: 0.8rem; }
+      .notes .love-letter { font-size: 0.9rem; }
+      .message-board textarea { font-size: 0.9rem; }
+      .message-board button { font-size: 0.9rem; }
+      .message-item { font-size: 0.85rem; }
+      .message-item time { font-size: 0.7rem; }
+      .timeline { padding-left: 1.8rem; }
+      .timeline-item::before { left: -18px; font-size: 1rem; }
+      .timeline-item h3 { font-size: 1.1rem; }
+      .timeline-item time, .timeline-item p { font-size: 0.85rem; }
+      .social-share a { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+      footer { font-size: 0.85rem; }
+    }
+    @media (max-width: 480px) {
+      #login-page { padding: 1rem; }
+      form#login-form { max-width: 300px; }
+      .gallery { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+      .gallery img { max-width: 100px; height: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link" aria-label="Skip to main content">Skip to content</a>
+  <!-- Preloader -->
+  <div class="preloader" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"></div>
+
+  <!-- Floating Elements -->
+  <div class="floating-container" aria-hidden="true"></div>
+
+  <!-- LOGIN PAGE -->
+  <section id="login-page" role="main" aria-live="polite" id="main-content">
+    <form id="login-form" novalidate aria-label="Login form">
+      <h1>Welcome Back, Priya 💖</h1>
+      <div>
+        <label for="username" id="username-label">Username or Email:</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username" aria-labelledby="username-label" aria-required="true" />
+      </div>
+      <div>
+        <label for="password" id="password-label">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" aria-labelledby="password-label" aria-required="true" />
+      </div>
+      <button type="submit" class="login-btn ripple" aria-label="Login to Priya's Love World">Login 💗</button>
+      <p class="note" id="form-message" aria-live="assertive" aria-atomic="true"></p>
+    </form>
+  </section>
+
+  <!-- HOME PAGE -->
+  <div id="home-page" role="main" aria-label="Main content of Priya's Love World" tabindex="-1" aria-hidden="true">
+    <button id="music-toggle" class="ripple" aria-label="Play background music (Tujh Mein Rab Dikhta Hai)">🎶</button>
+    <button id="theme-toggle" class="ripple" aria-label="Toggle dark theme">🌙</button>
+    <button id="logout-btn" class="ripple" aria-label="Logout and return to login">💔</button>
+    <button id="scroll-top" class="ripple" aria-label="Scroll to top">↑</button>
+    <header role="banner">
+      <h1>Welcome to My Love World, Priya</h1>
+      <p>You are the reason behind my smile, the love of my life, my forever 🌹</p>
+    </header>
+
+    <nav aria-label="Primary navigation">
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">☰</button>
+      <div class="nav-menu">
+        <a href="#memories" role="button" class="ripple" aria-label="Go to Our Memories section">Our Memories</a>
+        <a href="#lovenotes" role="button" class="ripple" aria-label="Go to Love Notes section">Love Notes</a>
+        <a href="#timeline" role="button" class="ripple" aria-label="Go to Timeline section">Timeline</a>
+        <a href="#messageboard" role="button" class="ripple" aria-label="Go to Message Board section">Message Board</a>
+      </div>
+    </nav>
+
+    <main>
+      <section id="memories" tabindex="0" aria-label="Our memories photo gallery">
+        <h2>Our Memories</h2>
+        <div class="quote-generator">
+          <button id="quote-btn" class="ripple" aria-label="Generate a new romantic quote">New Love Quote 💕</button>
+          <p id="quote-text" aria-live="polite"></p>
+        </div>
+        <div class="gallery" role="grid" aria-label="Photo gallery">
+          <figure role="gridcell">
+            <img data-src="https://via.placeholder.com/120x80?text=Memory+1" alt="Our first sunset together" class="lazy" />
+            <figcaption>Our first sunset</figcaption>
+          </figure>
+          <figure role="gridcell">
+            <img data-src="https://via.placeholder.com/120x80?text=Memory+2" alt="Candlelit dinner date" class="lazy" />
+            <figcaption>Candlelit dinner</figcaption>
+          </figure>
+          <figure role="gridcell">
+            <img data-src="https://via.placeholder.com/120x80?text=Memory+3" alt="Romantic beach walk" class="lazy" />
+            <figcaption>Beach walk</figcaption>
+          </figure>
+          <figure role="gridcell">
+            <img data-src="https://via.placeholder.com/120x80?text=Memory+4" alt="Starry night under the sky" class="lazy" />
+            <figcaption>Starry night</figcaption>
+          </figure>
+          <figure role="gridcell">
+            <img data-src="https://via.placeholder.com/120x80?text=Memory+5" alt="City adventure with Priya" class="lazy" />
+            <figcaption>City adventure</figcaption>
+          </figure>
+          <figure role="gridcell">
+            <img data-src="https://via.placeholder.com/120x80?text=Memory+6" alt="Cozy evening at home" class="lazy" />
+            <figcaption>Cozy evening</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="lovenotes" tabindex="0" aria-label="Love notes section">
+        <h2>Love Notes</h2>
+        <div class="notes">
+          <blockquote>"You are my sun on the darkest days, the calm in every storm."</blockquote>
+          <p class="quote">"In your smile, I see something more beautiful than the stars."</p>
+          <div class="love-letter" aria-label="Love letter to Priya">
+            My dearest Priya,  
+            <br />  
+            Every moment spent with you is a precious gem that I treasure deeply. You fill my life with endless joy and warmth.  
+            Your love is my guiding light, and I promise to cherish and adore you forever.  
+            Together, we create a beautiful story written with love, laughter, and endless dreams.  
+            <br />  
+            With all my love,  
+            <br />  
+            Me ❤️  
+          </div>
+        </div>
+      </section>
+
+      <section id="timeline" tabindex="0" aria-label="Relationship timeline">
+        <h2>Timeline</h2>
+        <div class="timeline" role="list">
+          <article class="timeline-item" role="listitem">
+            <h3>First Meeting</h3>
+            <time datetime="2024-05-18">May 18, 2024</time>
+            <p>The day our eyes met and everything changed forever. It was the beginning of our beautiful journey.</p>
+          </article>
+          <article class="timeline-item" role="listitem">
+            <h3>First Date</h3>
+            <time datetime="2025-01-16">January 16, 2025</time>
+            <p>A magical evening filled with laughter, conversation, and the start of something truly special.</p>
+          </article>
+          <article class="timeline-item" role="listitem">
+            <h3>Our Anniversary</h3>
+            <time datetime="2025-05-18">May 18, 2025</time>
+            <p>A full year filled with memories, love, and growing closer every day.</p>
+          </article>
+          <article class="timeline-item" role="listitem">
+            <h3>Forever Together</h3>
+            <time datetime="2025-05-31">May 31, 2025</time>
+            <p>Committing to share every tomorrow and cherish every moment side by side.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="messageboard" tabindex="0" aria-label="Message board section">
+        <h2>Love Messages</h2>
+        <div class="message-board">
+          <form id="message-form" aria-label="Add a love message">
+            <label for="message-input" id="message-label">Your Message:</label>
+            <textarea id="message-input" name="message" placeholder="Write a sweet note..." maxlength="200" aria-labelledby="message-label" aria-required="true"></textarea>
+            <button type="submit" class="ripple" aria-label="Post message">Post 💌</button>
+            <p id="message-error" class="note" aria-live="assertive"></p>
+          </form>
+          <div class="message-list" id="message-list" aria-label="List of love messages"></div>
+        </div>
+      </section>
+
+      <div class="social-share" aria-label="Social sharing options">
+        <a href="https://api.whatsapp.com/send?text=Check%20out%20this%20beautiful%20love%20website%20for%20Priya!%20[Your%20Website%20URL]" target="_blank" class="ripple" aria-label="Share on WhatsApp">WhatsApp</a>
+        <a href="https://twitter.com/intent/tweet?text=A%20heartfelt%20love%20website%20for%20Priya!%20[Your%20Website%20URL]" target="_blank" class="ripple" aria-label="Share on Twitter">Twitter</a>
+      </div>
+    </main>
+
+    <footer aria-label="Website footer">
+      Created with love for Priya 💗
+    </footer>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Image lightbox">
+    <div class="lightbox-content">
+      <button class="lightbox-close" aria-label="Close lightbox">×</button>
+      <button class="lightbox-prev" aria-label="Previous image">❮</button>
+      <button class="lightbox-next" aria-label="Next image">❯</button>
+      <img id="lightbox-img" src="" alt="Enlarged memory photo" />
+    </div>
+  </div>
+
+  <!-- Background music -->
+  <audio id="bg-music" preload="auto" loop aria-hidden="true" title="Tujh Mein Rab Dikhta Hai by Roop Kumar Rathod">
+    <source src="tujh-mein-rab-dikhta-hai.mp3" type="audio/mpeg">
+    <source src="https://cdn.pixabay.com/audio/2023/03/25/audio_f8c31f6638.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+<script defer>
+  // Debugging function
+  function debug(message) {
+    console.log(`[DEBUG - ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}]: ${message}`);
+  }
+
+  // Feature usage tracking
+  const usage = {
+    quotes: 0,
+    messages: 0,
+    logins: 0,
+  };
+
+  // Preloader
+  window.addEventListener('load', () => {
+    debug('Page loaded, hiding preloader');
+    setTimeout(() => {
+      const preloader = document.querySelector('.preloader');
+      if (preloader) {
+        preloader.classList.add('hidden');
+      } else {
+        debug('Error: Preloader not found');
+      }
+    }, 800);
+  });
+
+  // Custom Cursor (Desktop only)
+  const cursor = document.querySelector('.cursor');
+  if (cursor && window.innerWidth > 768) {
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
+    debug('Custom cursor enabled');
+  } else {
+    debug('Custom cursor disabled for mobile');
+  }
+
+  // Floating emojis
+  const container = document.querySelector('.floating-container');
+  const heartEmoji = '💖';
+  const flowerEmoji = '🌸';
+  function randomBetween(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+  if (container) {
+    function createFloatingEmoji() {
+      const el = document.createElement('div');
+      const isHeart = Math.random() > 0.5;
+      el.textContent = isHeart ? heartEmoji : flowerEmoji;
+      el.classList.add('floating', isHeart ? 'heart' : 'flower');
+      if (Math.random() > 0.8) el.classList.add('large');
+      el.style.left = `${randomBetween(0, 90)}vw`;
+      el.style.top = `${randomBetween(90, 100)}vh`;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 6000);
+    }
+    setInterval(createFloatingEmoji, window.innerWidth <= 768 ? 1500 : 1000);
+    debug('Floating emojis initialized');
+  } else {
+    debug('Error: Floating container not found');
+  }
+
+  // Lazy loading images
+  const lazyImages = document.querySelectorAll('img.lazy');
+  if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+          observer.unobserve(img);
+          debug(`Lazy-loaded image: ${img.src}`);
+        }
+      });
+    }, { rootMargin: '100px' });
+    lazyImages.forEach(img => imageObserver.observe(img));
+  } else {
+    lazyImages.forEach(img => {
+      img.src = img.dataset.src;
+      img.classList.remove('lazy');
+    });
+    debug('IntersectionObserver not supported, loaded all images');
+  }
+
+  // Section animations
+  const sections = document.querySelectorAll('section');
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        debug(`Section visible: ${entry.target.id}`);
+      }
+    });
+  }, { threshold: 0.1 });
+  sections.forEach(section => sectionObserver.observe(section));
+
+  // Background music with fade-in effect
+  const music = document.getElementById('bg-music');
+  const musicToggle = document.getElementById('music-toggle');
+  let isMusicPlaying = false;
+
+  if (music && musicToggle) {
+    // Initialize audio settings
+    music.volume = 0; // Start at 0 for fade-in
+    music.muted = true;
+    musicToggle.innerHTML = '🎶 Play';
+    musicToggle.setAttribute('aria-label', 'Play background music (Tujh Mein Rab Dikhta Hai)');
+
+    // Fade-in function
+    function fadeInAudio() {
+      let volume = 0;
+      music.volume = volume;
+      const fadeInterval = setInterval(() => {
+        volume += 0.02;
+        music.volume = Math.min(volume, 0.15); // Cap at 15% volume
+        if (volume >= 0.15) clearInterval(fadeInterval);
+      }, 100);
+    }
+
+    // Event listeners
+    music.addEventListener('loadedmetadata', () => {
+      debug('Audio loaded successfully: Tujh Mein Rab Dikhta Hai');
+    });
+    music.addEventListener('error', () => {
+      debug('Audio failed to load: Falling back to alternative track');
+      music.src = 'https://cdn.pixabay.com/audio/2023/03/25/audio_f8c31f6638.mp3';
+      music.load();
+    });
+    musicToggle.addEventListener('click', () => {
+      isMusicPlaying = !isMusicPlaying;
+      music.muted = !isMusicPlaying;
+      musicToggle.innerHTML = isMusicPlaying ? '🎶 Mute' : '🎶 Play';
+      musicToggle.setAttribute('aria-label', isMusicPlaying ? 'Mute background music (Tujh Mein Rab Dikhta Hai)' : 'Play background music (Tujh Mein Rab Dikhta Hai)');
+      if (isMusicPlaying && music.paused) {
+        music.play()
+          .then(() => {
+            fadeInAudio();
+            debug('Music playing with fade-in: Tujh Mein Rab Dikhta Hai');
+          })
+          .catch(error => {
+            debug(`Music playback failed: ${error.message}`);
+            musicToggle.innerHTML = '🎶 Play';
+            isMusicPlaying = false;
+          });
+      } else if (!isMusicPlaying) {
+        music.pause();
+        music.volume = 0; // Reset for next fade-in
+        debug('Music paused');
+      }
+    });
+    // Ensure music stops on page unload
+    window.addEventListener('unload', () => {
+      music.pause();
+      music.currentTime = 0;
+    });
+  } else {
+    debug('Error: Music or toggle elements not found');
+  }
+
+  // Theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+      const isDark = document.body.classList.contains('dark-theme');
+      themeToggle.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+      themeToggle.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+      debug(`Theme toggled: ${isDark ? 'Dark' : 'Light'}`);
+    });
+  } else {
+    debug('Error: Theme toggle not found');
+  }
+
+  // Navigation toggle
+  const navToggle = document.querySelector('.nav-toggle');
+  const navMenu = document.querySelector('.nav-menu');
+  if (navToggle && navMenu) {
+    navToggle.addEventListener('click', () => {
+      const isExpanded = navMenu.classList.toggle('active');
+      navToggle.setAttribute('aria-expanded', isExpanded);
+      navToggle.innerHTML = isExpanded ? '✕' : '☰';
+      debug(`Navigation menu ${isExpanded ? 'expanded' : 'collapsed'}`);
+    });
+  } else {
+    debug('Error: Navigation toggle or menu not found');
+  }
+
+  // Quote generator
+  const quoteBtn = document.getElementById('quote-btn');
+  const quoteText = document.getElementById('quote-text');
+  const quoteContainer = document.querySelector('.quote-generator');
+  const quotes = [
+    'Priya, you’re my forever home. ❤️',
+    'Every moment with you is a love story. 🌹',
+    'Your love is my favorite melody. 🎶',
+    'Priya, you light up my world. ✨',
+    'Our love knows no end. 💞',
+  ];
+  if (quoteBtn && quoteText && quoteContainer) {
+    quoteBtn.addEventListener('click', () => {
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      quoteText.textContent = randomQuote;
+      usage.quotes++;
+      const heart = document.createElement('div');
+      heart.className = 'heart-pop';
+      heart.textContent = '💖';
+      quoteContainer.appendChild(heart);
+      setTimeout(() => heart.remove(), 500);
+      debug(`Quote generated: ${randomQuote}, Total quotes: ${usage.quotes}`);
+    });
+    quoteBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        quoteText.textContent = randomQuote;
+        usage.quotes++;
+        const heart = document.createElement('div');
+        heart.className = 'heart-pop';
+        heart.textContent = '💖';
+        quoteContainer.appendChild(heart);
+        setTimeout(() => heart.remove(), 500);
+        debug(`Quote generated via keyboard: ${randomQuote}, Total quotes: ${usage.quotes}`);
+      }
+    });
+  } else {
+    debug('Error: Quote button, text, or container not found');
+  }
+
+  // Message board
+  const messageForm = document.getElementById('message-form');
+  const messageInput = document.getElementById('message-input');
+  const messageList = document.getElementById('message-list');
+  const messageError = document.getElementById('message-error');
+  if (messageForm && messageInput && messageList && messageError) {
+    const messages = JSON.parse(localStorage.getItem('loveMessages') || '[]');
+    function renderMessages() {
+      messageList.innerHTML = '';
+      messages.forEach((msg, index) => {
+        const item = document.createElement('div');
+        item.className = 'message-item';
+        item.innerHTML = `
+          <time datetime="${msg.date}">${new Date(msg.date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</time>
+          <p>${msg.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          <button class="delete-btn ripple" aria-label="Delete message" type="button" data-index="${index}">🗑️</button>
+        `;
+        messageList.appendChild(item);
+      });
+      debug(`Rendered ${messages.length} messages`);
+    }
+    renderMessages();
+    messageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = messageInput.value.trim();
+      if (!text) {
+        messageError.textContent = 'Please enter a message.';
+        messageInput.focus();
+        debug('Message submission failed: Empty input');
+        return;
+      }
+      if (text.length > 200) {
+        messageError.textContent = 'Message is too long (max 200 characters).';
+        messageInput.focus();
+        debug('Message submission failed: Exceeds 200 characters');
+        return;
+      }
+      const message = {
+        text,
+        date: new Date().toISOString(),
+      };
+      messages.unshift(message);
+      localStorage.setItem('loveMessages', JSON.stringify(messages));
+      messageInput.value = '';
+      messageError.textContent = '';
+      renderMessages();
+      usage.messages++;
+      debug(`Message posted: ${text}, Total messages: ${messages.length}`);
+    });
+    messageList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        const index = parseInt(e.target.dataset.index);
+        messages.splice(index, 1);
+        localStorage.setItem('loveMessages', JSON.stringify(messages));
+        renderMessages();
+        debug(`Message deleted at index ${index}`);
+      }
+    });
+  } else {
+    debug('Error: Message board elements not found');
+  }
+
+  // Login form handling
+  const loginForm = document.getElementById('login-form');
+  const formMessage = document.getElementById('form-message');
+  const loginPage = document.getElementById('login-page');
+  const homePage = document.getElementById('home-page');
+  const logoutBtn = document.getElementById('logout-btn');
+  const loginBtn = document.querySelector('.login-btn');
+
+  function showHomePage() {
+    debug('Showing home page');
+    if (loginPage && homePage) {
+      loginPage.style.display = 'none';
+      loginPage.setAttribute('aria-hidden', 'true');
+      homePage.style.display = 'flex';
+      homePage.removeAttribute('aria-hidden');
+      homePage.focus();
+      document.title = 'Priya’s Love World 💗';
+      formMessage.textContent = '';
+      usage.logins++;
+      debug(`Login count: ${usage.logins}`);
+      // Start music on login
+      if (music) {
+        isMusicPlaying = true;
+        music.muted = false;
+        music.play()
+          .then(() => {
+            fadeInAudio();
+            debug('Music started on login: Tujh Mein Rab Dikhta Hai');
+          })
+          .catch(error => {
+            debug(`Music playback failed on login: ${error.message}`);
+          });
+        musicToggle.innerHTML = '🎶 Mute';
+        musicToggle.setAttribute('aria-label', 'Mute background music (Tujh Mein Rab Dikhta Hai)');
+      }
+    } else {
+      debug('Error: Login or home page not found');
+    }
+  }
+
+  function showLoginPage() {
+    debug('Showing login page');
+    if (loginPage && homePage) {
+      homePage.style.display = 'none';
+      homePage.setAttribute('aria-hidden', 'true');
+      loginPage.style.display = 'flex';
+      loginPage.removeAttribute('aria-hidden');
+      const usernameInput = loginForm.querySelector('input[name="username"]');
+      if (usernameInput) usernameInput.focus();
+      document.title = "Priya's Love World 💗 - Login";
+      loginForm.reset();
+      formMessage.textContent = '';
+      // Pause music on logout
+      if (music) {
+        isMusicPlaying = false;
+        music.muted = true;
+        music.pause();
+        music.volume = 0;
+        musicToggle.innerHTML = '🎶 Play';
+        musicToggle.setAttribute('aria-label', 'Play background music (Tujh Mein Rab Dikhta Hai)');
+        debug('Music paused on logout');
+      }
+    } else {
+      debug('Error: Login or home page not found');
+    }
+  }
+
+  if (loginForm && formMessage && loginBtn) {
+    loginForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      debug('Login form submitted');
+      formMessage.textContent = '';
+      formMessage.style.color = '#a8527b';
+      loginBtn.disabled = true;
+      formMessage.textContent = 'Logging in...';
+
+      const usernameInput = loginForm.querySelector('input[name="username"]');
+      const passwordInput = loginForm.querySelector('input[name="password"]');
+
+      if (!usernameInput || !passwordInput) {
+        formMessage.textContent = 'Form error: Inputs not found.';
+        loginBtn.disabled = false;
+        debug('Error: Username or password input not found');
+        return;
+      }
+
+      const username = usernameInput.value.trim().toLowerCase();
+      const password = passwordInput.value.trim();
+
+      debug(`Attempting login with Username=${username}`);
+
+      if (!username) {
+        formMessage.textContent = 'Please enter a username or email.';
+        usernameInput.focus();
+        loginBtn.disabled = false;
+        debug('Error: Username is empty');
+        return;
+      }
+      if (!password) {
+        formMessage.textContent = 'Please enter a password.';
+        passwordInput.focus();
+        loginBtn.disabled = false;
+        debug('Error: Password is empty');
+        return;
+      }
+
+      setTimeout(() => {
+        if (username === 'priya' && password === 'pranay') {
+          debug('Login successful');
+          showHomePage();
+        } else {
+          formMessage.textContent = 'Invalid username or password.';
+          passwordInput.focus();
+          debug(`Login failed: Username=${username}`);
+        }
+        loginBtn.disabled = false;
+      }, 500);
+    });
+  } else {
+    console.error('Critical error: Login form, message, or button not found');
+    debug('Critical error: Login form, message, or button not found');
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
+      showLoginPage();
+      debug('Logout clicked');
+    });
+  } else {
+    debug('Error: Logout button not found');
+  }
+
+  // Lightbox for Gallery
+  const galleryImages = document.querySelectorAll('.gallery img');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const closeBtn = document.querySelector('.lightbox-close');
+  const prevBtn = document.querySelector('.lightbox-prev');
+  const nextBtn = document.querySelector('.lightbox-next');
+  let currentImageIndex = 0;
+
+  if (galleryImages && lightbox && lightboxImg && closeBtn && prevBtn && nextBtn) {
+    galleryImages.forEach((img, index) => {
+      img.addEventListener('click', () => {
+        currentImageIndex = index;
+        lightboxImg.src = img.src;
+        lightbox.style.display = 'flex';
+        lightbox.removeAttribute('aria-hidden');
+        closeBtn.focus();
+        debug(`Lightbox opened for image ${index + 1}`);
+      });
+      img.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          currentImageIndex = index;
+          lightboxImg.src = img.src;
+          lightbox.style.display = 'flex';
+          lightbox.removeAttribute('aria-hidden');
+          closeBtn.focus();
+          debug(`Lightbox opened via keyboard for image ${index + 1}`);
+        }
+      });
+    });
+
+    function navigateLightbox(direction) {
+      currentImageIndex = (currentImageIndex + direction + galleryImages.length) % galleryImages.length;
+      lightboxImg.src = galleryImages[currentImageIndex].src;
+      debug(`Lightbox navigated to image ${currentImageIndex + 1}`);
+    }
+
+    prevBtn.addEventListener('click', () => navigateLightbox(-1));
+    nextBtn.addEventListener('click', () => navigateLightbox(1));
+
+    prevBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigateLightbox(-1);
+        debug(`Lightbox navigated to previous image via keyboard`);
+      }
+    });
+
+    nextBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        navigateLightbox(1);
+        debug(`Lightbox navigated to next image via keyboard`);
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      lightbox.style.display = 'none';
+      lightbox.setAttribute('aria-hidden', 'true');
+      debug('Lightbox closed');
+    });
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        lightbox.style.display = 'none';
+        lightbox.setAttribute('aria-hidden', 'true');
+        debug('Lightbox closed by clicking outside');
+      }
+    });
+
+    closeBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        lightbox.style.display = 'none';
+        lightbox.setAttribute('aria-hidden', 'true');
+        debug('Lightbox closed via keyboard');
+      }
+    });
+
+    // Swipe gestures
+    let touchStartX = 0;
+    let touchEndX = 0;
+    lightbox.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      debug('Touch start in lightbox');
+    });
+    lightbox.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchEndX - touchStartX;
+      if (swipeDistance > 50) {
+        navigateLightbox(-1);
+        debug('Swipe right: Previous image');
+      } else if (swipeDistance < -50) {
+        navigateLightbox(1);
+        debug('Swipe left: Next image');
+      }
+    });
+  } else {
+    debug('Error: Gallery or lightbox elements not found');
+  }
+
+  // Scroll to top
+  const scrollTopBtn = document.getElementById('scroll-top');
+  if (scrollTopBtn) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        scrollTopBtn.classList.add('visible');
+      } else {
+        scrollTopBtn.classList.remove('visible');
+      }
+    });
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      debug('Scrolled to top');
+    });
+  } else {
+    debug('Error: Scroll to top button not found');
+  }
+
+  // Throttled resize handler
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      debug(`Screen resized: ${window.innerWidth}x${window.innerHeight}`);
+    }, 250);
+  });
+
+  // Initialize page
+  window.addEventListener('load', () => {
+    showLoginPage();
+    debug('Initial page load: Showing login page');
+    console.log('Usage stats:', usage);
+  });
+</script>
+</body>
+</html>
